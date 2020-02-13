@@ -37,7 +37,7 @@ expressServer.get('/', (req, res) => {
 
 expressServer.get('/status', (req, res) => {
     const tokens = [];
-    currentAccessTokens.forEach((c, key) => tokens.push({ client_id: key, token: c.accessToken, expires: c.expires }));
+    currentAccessTokens.forEach((c, key) => tokens.push({ client_id: key, authToken: c.auth, accessToken: c.access, expires: c.expires }));
 
     res.json({ tokens, clients: clientDb })
 })
@@ -59,7 +59,7 @@ expressServer.get('/auth', (req, res) => {
     let accessToken;
 
     if (!currentAccessTokens.has(client_id)) {
-        accessToken = { accessToken: uuid(), expires: new Date().getTime() + (3600 * 1000)}
+        accessToken = { authToken: uuid(), accessToken: null, expires: new Date().getTime() + (3600 * 1000)}
         currentAccessTokens.set(client_id, accessToken);
     } else {
         // is expired?
@@ -71,6 +71,7 @@ expressServer.get('/auth', (req, res) => {
 
     res.json({
         client: (client ? client.name : 'no such client'),
+        action: `We will redirect to ${ redirect_uri }?code=${ accessToken.authToken }&state=${ encodeURIComponent(state) }`,
         accessToken,
         response_type,
         client_id,
